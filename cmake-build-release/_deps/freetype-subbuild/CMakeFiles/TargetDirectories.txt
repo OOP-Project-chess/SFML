@@ -1,0 +1,3 @@
+/Users/nuyoes/Desktop/ChessPrj/ChessPrj/cmake-build-release/_deps/freetype-subbuild/CMakeFiles/freetype-populate.dir
+/Users/nuyoes/Desktop/ChessPrj/ChessPrj/cmake-build-release/_deps/freetype-subbuild/CMakeFiles/edit_cache.dir
+/Users/nuyoes/Desktop/ChessPrj/ChessPrj/cmake-build-release/_deps/freetype-subbuild/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,7 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -G Ninja -S /Users/nuyoes/Desktop/ChessPrj/ChessPrj -B /Users/nuyoes/Desktop/ChessPrj/ChessPrj/cmake-build-debug
+-- Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE) 
+-- Configuring libogg 1.3.5
+-- Configuring vorbis 1.3.7
+-- Configuring done (16.3s)
+-- Generating done (0.8s)
+-- Build files have been written to: /Users/nuyoes/Desktop/ChessPrj/ChessPrj/cmake-build-debug
