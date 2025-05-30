@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
-project(ChessPrj LANGUAGES CXX)
+project(SFML LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -22,6 +22,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/GameData.hpp
         src/GameLogic.hpp
         src/GameLogic.cpp
+        src/GameLoop.hpp
+        src/GameLoop.cpp
 )
 
 # C++ 표준 설정
