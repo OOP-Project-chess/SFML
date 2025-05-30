@@ -9,6 +9,7 @@
 #include <optional>
 #include <map>
 #include <functional> // For std::function
+#include <boost/asio.hpp>
 
 // formatTime 함수 선언
 std::string formatTime(sf::Time time);
@@ -44,6 +45,7 @@ void gameLoop(
     sf::Time& blackTimeLeft,
     sf::Clock& frameClock,
     std::function<void()> actualResetGame,
+    boost::asio::ip::tcp::socket& socket,
     float timerPadding
 );
 

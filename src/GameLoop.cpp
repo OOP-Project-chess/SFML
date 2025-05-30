@@ -16,6 +16,27 @@ std::string formatTime(sf::Time time) {
     return oss.str();
 }
 
+// 체스 보드 좌표를 "e2" 같은 표기법으로 변환하는 함수
+std::string toChessNotation(int col, int row) {
+    char file = 'a' + col;
+    char rank = '8' - row;
+    return std::string{file} + rank;
+}
+
+
+// 말 이름을 문자열로 바꾸는 함수
+std::string pieceTypeToString(PieceType type) {
+    switch (type) {
+        case PieceType::King: return "king";
+        case PieceType::Queen: return "queen";
+        case PieceType::Rook: return "rook";
+        case PieceType::Bishop: return "bishop";
+        case PieceType::Knight: return "knight";
+        case PieceType::Pawn: return "pawn";
+        default: return "unknown";
+    }
+}
+
 // 게임 루프 함수 정의
 void gameLoop(
     sf::RenderWindow& window,
@@ -49,6 +70,7 @@ void gameLoop(
     sf::Time& blackTimeLeft,
     sf::Clock& frameClock,
     std::function<void()> actualResetGame,
+    boost::asio::ip::tcp::socket& socket,
     float timerPadding
 ) {
     // --- 메인 게임 루프 ---
@@ -128,6 +150,19 @@ void gameLoop(
                                             if(actualPieceToMoveOpt.has_value()){
                                                 board_state[clickedRow][clickedCol] = Piece(actualPieceToMoveOpt->type, actualPieceToMoveOpt->color, actualPieceToMoveOpt->sprite);
                                                 board_state[fromR_local][fromC_local].reset();
+                                                // 위치 계산
+                                                std::string from = toChessNotation(fromC_local, fromR_local);
+                                                std::string to = toChessNotation(clickedCol, clickedRow);
+                                                std::string piece = pieceTypeToString(actualPieceToMoveOpt->type);
+                                                std::string color = (actualPieceToMoveOpt->color == PieceColor::White) ? "white" : "black";
+
+                                                // JSON 문자열로 구성
+                                                std::string message = R"({"type":"move","from":")" + from +
+                                                                      R"(","to":")" + to +
+                                                                      R"(","piece":")" + piece +
+                                                                      R"(","color":")" + color + R"("})";
+
+                                                boost::asio::write(socket, boost::asio::buffer(message + "\n")); // 줄바꿈 포함
                                             }
                                             if (board_state[clickedRow][clickedCol].has_value()) {
                                                 sf::Sprite& movedSprite = board_state[clickedRow][clickedCol]->sprite;

@@ -4,8 +4,8 @@
 
 #include <SFML/Graphics.hpp>
 // Boost.Asio 관련 헤더는 네트워크 기능 추가 시 다시 포함
-// #include <boost/asio.hpp>
-// #include <boost/asio/ip/address.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
 
 #include <iostream> // for std::cerr, std::cout
 #include <string>
@@ -19,12 +19,21 @@
 #include <iomanip>    // For std::setfill, std::setw (formatTime 함수가 GameLoop.cpp로 이동)
 #include <sstream>    // For std::ostringstream (formatTime 함수가 GameLoop.cpp로 이동)
 
-// using boost::asio::ip::tcp; // 네트워크 기능 추가 시 다시 포함
+using boost::asio::ip::tcp;
 using namespace std; // 사용자 코드 스타일 유지
 
 // formatTime 함수는 GameLoop.cpp로 이동했습니다.
 
 int main() {
+    boost::asio::io_context io;
+
+    tcp::socket socket(io);
+    // 수정된 부분
+    tcp::endpoint endpoint(boost::asio::ip::make_address("127.0.0.1"), 1234);
+    socket.connect(endpoint);
+
+
+
     sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Chess Game Prj (SFML 3.0.x)");
     window.setFramerateLimit(60);
 
@@ -181,6 +190,7 @@ int main() {
 
     // 게임 루프 호출
     gameLoop(
+
         window, font, tile, lightColor, darkColor, checkedKingTileColor,
         chooseSidePromptText, messageText, whiteTimerText, blackTimerText,
         whiteStartButton, whiteStartText, blackStartButton, blackStartText,
@@ -188,6 +198,7 @@ int main() {
         currentGameState, selectedPiecePos, possibleMoves, currentTurn, gameMessageStr,
         textures, board_state, whiteTimeLeft, blackTimeLeft, frameClock,
         actualResetGame_lambda,
+        socket,
         timerPadding
     );
 
