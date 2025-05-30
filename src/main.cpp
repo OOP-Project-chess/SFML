@@ -35,7 +35,7 @@ std::string formatTime(sf::Time time) {
 // 게임 루프 함수 선언
 void gameLoop(
     sf::RenderWindow& window,
-    sf::Font& font, // 폰트는 UI 요소들이 이미 참조하고 있지만, 혹시 몰라 전달
+    sf::Font& font,
     sf::RectangleShape& tile,
     sf::Color& lightColor,
     sf::Color& darkColor,
@@ -57,12 +57,13 @@ void gameLoop(
     std::vector<sf::Vector2i>& possibleMoves,
     PieceColor& currentTurn,
     std::string& gameMessageStr,
-    std::map<std::string, sf::Texture>& textures, // place_piece 람다 때문에 필요할 수 있음 (actualResetGame 통해)
+    std::map<std::string, sf::Texture>& textures,
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::Time& whiteTimeLeft,
     sf::Time& blackTimeLeft,
     sf::Clock& frameClock,
-    std::function<void()> actualResetGame // resetGame 람다 전달
+    std::function<void()> actualResetGame,
+    float timerPadding // timerPadding 파라미터 추가
 ) {
     // --- 메인 게임 루프 ---
     while (window.isOpen()) {
@@ -96,9 +97,9 @@ void gameLoop(
         whiteTimerText.setString("White: " + formatTime(whiteTimeLeft));
         blackTimerText.setString("Black: " + formatTime(blackTimeLeft));
         
-        sf::FloatRect wt_bounds_loop = whiteTimerText.getLocalBounds(); // 루프 내에서 사용될 변수명
-        whiteTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - wt_bounds_loop.size.x) / 2.f - wt_bounds_loop.position.x, timerPadding - wt_bounds_loop.position.y});
-        sf::FloatRect bt_bounds_loop = blackTimerText.getLocalBounds(); // 루프 내에서 사용될 변수명
+        sf::FloatRect wt_bounds_loop = whiteTimerText.getLocalBounds();
+        whiteTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - wt_bounds_loop.size.x) / 2.f - wt_bounds_loop.position.x, timerPadding - wt_bounds_loop.position.y}); // 전달받은 timerPadding 사용
+        sf::FloatRect bt_bounds_loop = blackTimerText.getLocalBounds();
         blackTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - bt_bounds_loop.size.x) / 2.f - bt_bounds_loop.position.x, whiteTimerText.getPosition().y + wt_bounds_loop.size.y + wt_bounds_loop.position.y + 5.f - bt_bounds_loop.position.y });
 
         // 이벤트 처리
@@ -188,7 +189,7 @@ void gameLoop(
                         } else { selectedPiecePos.reset(); possibleMoves.clear(); }
                     } else if (currentGameState == GameState::GameOver) {
                          if (homeButtonShape.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
-                            actualResetGame(); // 전달받은 람다 호출
+                            actualResetGame(); 
                          }
                     }
                 }
@@ -299,12 +300,7 @@ int main() {
     sf::Text blackTimerText(font, "00:00", 22);
     blackTimerText.setFillColor(sf::Color::Black);
 
-    // float timerPadding = 15.f; // gameLoop 함수 내에서 지역 변수로 사용
-    // sf::FloatRect wt_bounds = whiteTimerText.getLocalBounds(); // gameLoop 함수 내에서 지역 변수로 사용
-    // whiteTimerText.setPosition(...); // gameLoop 함수 내에서 업데이트
-    // sf::FloatRect bt_bounds = blackTimerText.getLocalBounds(); // gameLoop 함수 내에서 지역 변수로 사용
-    // blackTimerText.setPosition(...); // gameLoop 함수 내에서 업데이트
-
+    float timerPadding = 15.f; // main 함수에 timerPadding 정의
 
     float buttonWidth = BUTTON_PANEL_WIDTH - 80;
     float buttonHeight = 50.f;
@@ -381,7 +377,7 @@ int main() {
     sf::Time blackTimeLeft = sf::seconds(INITIAL_TIME_SECONDS);
     sf::Clock frameClock;
 
-    auto place_piece = [&](int r, int c, PieceType type, PieceColor piece_color, const std::string& name_str) { // name -> name_str
+    auto place_piece = [&](int r, int c, PieceType type, PieceColor piece_color, const std::string& name_str) {
         std::string key = (piece_color == PieceColor::White ? "w_" : "b_") + name_str;
         if (textures.count(key) == 0 || textures[key].getSize().x == 0) {
             std::cerr << "Texture for key '" << key << "' not found or invalid!" << std::endl; return;
@@ -398,12 +394,12 @@ int main() {
     auto actualSetupBoard = [&]() {
         board_state = {};
         place_piece(7,0,PieceType::Rook,PieceColor::White,"rook"); place_piece(7,1,PieceType::Knight,PieceColor::White,"knight"); place_piece(7,2,PieceType::Bishop,PieceColor::White,"bishop"); place_piece(7,3,PieceType::Queen,PieceColor::White,"queen"); place_piece(7,4,PieceType::King,PieceColor::White,"king"); place_piece(7,5,PieceType::Bishop,PieceColor::White,"bishop"); place_piece(7,6,PieceType::Knight,PieceColor::White,"knight"); place_piece(7,7,PieceType::Rook,PieceColor::White,"rook");
-        for(int c_idx=0;c_idx<8;++c_idx)place_piece(6,c_idx,PieceType::Pawn,PieceColor::White,"pawn"); // c -> c_idx
+        for(int c_idx=0;c_idx<8;++c_idx)place_piece(6,c_idx,PieceType::Pawn,PieceColor::White,"pawn");
         place_piece(0,0,PieceType::Rook,PieceColor::Black,"rook"); place_piece(0,1,PieceType::Knight,PieceColor::Black,"knight"); place_piece(0,2,PieceType::Bishop,PieceColor::Black,"bishop"); place_piece(0,3,PieceType::Queen,PieceColor::Black,"queen"); place_piece(0,4,PieceType::King,PieceColor::Black,"king"); place_piece(0,5,PieceType::Bishop,PieceColor::Black,"bishop"); place_piece(0,6,PieceType::Knight,PieceColor::Black,"knight"); place_piece(0,7,PieceType::Rook,PieceColor::Black,"rook");
-        for(int c_idx=0;c_idx<8;++c_idx)place_piece(1,c_idx,PieceType::Pawn,PieceColor::Black,"pawn"); // c -> c_idx
+        for(int c_idx=0;c_idx<8;++c_idx)place_piece(1,c_idx,PieceType::Pawn,PieceColor::Black,"pawn");
     };
 
-    auto actualResetGame_lambda = [&]() { // 람다 이름 변경 (gameLoop에 전달할 것이므로)
+    auto actualResetGame_lambda = [&]() {
         actualSetupBoard();
         currentGameState = GameState::ChoosingPlayer;
         currentTurn = PieceColor::None;
@@ -426,7 +422,8 @@ int main() {
         popupBackground, popupMessageText, homeButtonShape, homeButtonText,
         currentGameState, selectedPiecePos, possibleMoves, currentTurn, gameMessageStr,
         textures, board_state, whiteTimeLeft, blackTimeLeft, frameClock,
-        actualResetGame_lambda // 람다 전달
+        actualResetGame_lambda,
+        timerPadding // timerPadding 전달
     );
 
     return 0;
