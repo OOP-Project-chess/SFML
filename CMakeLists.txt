@@ -24,7 +24,16 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/GameLogic.cpp
         src/GameLoop.hpp
         src/GameLoop.cpp
+        src/NetworkClient.hpp
+        src/NetworkClient.cpp
+        src/BoardRenderer.hpp
+        src/BoardRenderer.cpp
+        src/GameStateUpdater.hpp
+        src/GameStateUpdater.cpp
+        src/InputHandler.hpp
+        src/InputHandler.cpp
 )
+
 
 # C++ 표준 설정
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

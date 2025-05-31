@@ -1,7 +1,7 @@
 #include "GameData.hpp"     // GameState, Piece, 상수 등 모든 정의 포함
 #include "GameLogic.hpp"    // getPossibleMoves 등 게임 로직 함수
 #include "GameLoop.hpp"     // gameLoop 함수 선언 포함
-
+#include "NetworkClient.hpp"
 #include <SFML/Graphics.hpp>
 // Boost.Asio 관련 헤더는 네트워크 기능 추가 시 다시 포함
 #include <boost/asio.hpp>
@@ -25,13 +25,16 @@ using namespace std; // 사용자 코드 스타일 유지
 // formatTime 함수는 GameLoop.cpp로 이동했습니다.
 
 int main() {
-    boost::asio::io_context io;
+    NetworkClient client("127.0.0.1", 1234);
 
-    tcp::socket socket(io);
-    // 수정된 부분
-    tcp::endpoint endpoint(boost::asio::ip::make_address("127.0.0.1"), 1234);
-    socket.connect(endpoint);
+    // 2. 서버 메시지 수신 시작 (백그라운드 쓰레드로 실행)
+    client.startReceiving([](const std::string& msg) {
+        std::cout << "[서버] " << msg << std::endl;
+    });
 
+    // 3. 소켓을 사용해 서버로 메시지 전송하고 싶다면:
+    tcp::socket& socket = client.getSocket();
+    // 예: boost::asio::write(socket, boost::asio::buffer("hello"));
 
 
     sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Chess Game Prj (SFML 3.0.x)");
