@@ -35,7 +35,9 @@ void handleMouseClick(
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::RectangleShape& homeButtonShape,
     std::function<void()> actualResetGame,
-    boost::asio::ip::tcp::socket& socket
+    boost::asio::ip::tcp::socket& socket,
+    PieceColor myColor
+
 ) {
     if (currentGameState == GameState::ChoosingPlayer) {
         if (whiteStartButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
@@ -50,6 +52,8 @@ void handleMouseClick(
             frameClock.restart();
         }
     } else if (currentGameState == GameState::Playing) {
+        if (currentTurn != myColor) return;
+
         int clickedCol = mousePos.x / TILE_SIZE;
         int clickedRow = mousePos.y / TILE_SIZE;
 

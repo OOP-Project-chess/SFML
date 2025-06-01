@@ -52,6 +52,7 @@ void gameLoop(
     sf::Clock& frameClock,
     std::function<void()> actualResetGame,
     boost::asio::ip::tcp::socket& socket,
+    PieceColor myColor,
     float timerPadding
 ) {
     // --- 메인 게임 루프 ---
@@ -82,7 +83,7 @@ void gameLoop(
                 if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
                     handleMouseClick(mouseButtonPressed->position, currentGameState, whiteStartButton, blackStartButton,
                                      whiteStartText, blackStartText, frameClock, currentTurn, gameMessageStr,
-                                     selectedPiecePos, possibleMoves, board_state, homeButtonShape, actualResetGame, socket);
+                                     selectedPiecePos, possibleMoves, board_state, homeButtonShape, actualResetGame, socket, myColor);
                 }
             }
         }

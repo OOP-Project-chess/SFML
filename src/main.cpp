@@ -13,24 +13,31 @@
 #include <array>
 #include <optional>
 #include <map>
+#include <queue>
+#include <mutex>
 // #include <thread> // 네트워크 기능 추가 시 필요할 수 있음
 // #include <chrono> // 네트워크 기능 추가 시 필요할 수 있음
 #include <filesystem> // For paths
 #include <iomanip>    // For std::setfill, std::setw (formatTime 함수가 GameLoop.cpp로 이동)
 #include <sstream>    // For std::ostringstream (formatTime 함수가 GameLoop.cpp로 이동)
-
+#include <nlohmann/json.hpp>     // ✅ 헤더 추가
+using json = nlohmann::json;    // ✅ 별칭 선언
 using boost::asio::ip::tcp;
 using namespace std; // 사용자 코드 스타일 유지
+std::queue<std::string> messageQueue;
+std::mutex messageMutex;
 
 // formatTime 함수는 GameLoop.cpp로 이동했습니다.
+PieceColor myColor = PieceColor::None;
 
 int main() {
     NetworkClient client("127.0.0.1", 1234);
 
     // 2. 서버 메시지 수신 시작 (백그라운드 쓰레드로 실행)
-    client.startReceiving([](const std::string& msg) {
-        std::cout << "[서버] " << msg << std::endl;
-    });
+    // client.startReceiving([](const std::string& msg) {
+    //     std::cout << "[서버] " << msg << std::endl;
+    // });
+
 
     // 3. 소켓을 사용해 서버로 메시지 전송하고 싶다면:
     tcp::socket& socket = client.getSocket();
@@ -136,6 +143,25 @@ int main() {
     std::map<std::string, sf::Texture> textures;
     std::vector<std::string> names = { "king", "queen", "rook", "bishop", "knight", "pawn" };
 
+    client.startReceiving([&](const std::string& msg) {
+    std::lock_guard<std::mutex> lock(messageMutex);
+    messageQueue.push(msg);
+
+    try {
+        auto parsed = json::parse(msg);
+        if (parsed["type"] == "assignColor") {
+            std::string color = parsed["color"];
+            myColor = (color == "white") ? PieceColor::White : PieceColor::Black;
+        } else if (parsed["type"] == "turn") {
+            std::string turn = parsed["currentTurn"];
+            currentTurn = (turn == "white") ? PieceColor::White : PieceColor::Black;
+        }
+    } catch (...) {
+        // 무시
+    }
+});
+
+
     for (const auto& color_str : { "w", "b" }) {
         for (const auto& name : names) {
             std::string key = std::string(color_str) + "_" + name;
@@ -193,7 +219,6 @@ int main() {
 
     // 게임 루프 호출
     gameLoop(
-
         window, font, tile, lightColor, darkColor, checkedKingTileColor,
         chooseSidePromptText, messageText, whiteTimerText, blackTimerText,
         whiteStartButton, whiteStartText, blackStartButton, blackStartText,
@@ -201,7 +226,7 @@ int main() {
         currentGameState, selectedPiecePos, possibleMoves, currentTurn, gameMessageStr,
         textures, board_state, whiteTimeLeft, blackTimeLeft, frameClock,
         actualResetGame_lambda,
-        socket,
+        socket,myColor,
         timerPadding
     );
 

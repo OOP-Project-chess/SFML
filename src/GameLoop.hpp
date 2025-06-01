@@ -46,6 +46,7 @@ void gameLoop(
     sf::Clock& frameClock,
     std::function<void()> actualResetGame,
     boost::asio::ip::tcp::socket& socket,
+    PieceColor myColor,
     float timerPadding
 );
 

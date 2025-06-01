@@ -21,5 +21,6 @@ void handleMouseClick(
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::RectangleShape& homeButtonShape,
     std::function<void()> actualResetGame,
-    boost::asio::ip::tcp::socket& socket
+    boost::asio::ip::tcp::socket& socket,
+    PieceColor myColor
 );
