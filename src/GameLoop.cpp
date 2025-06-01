@@ -6,6 +6,9 @@
 #include "BoardRenderer.hpp"
 #include "GameStateUpdater.hpp"
 #include "InputHandler.hpp"
+#include <nlohmann/json.hpp>     // ✅ 헤더 추가
+using json = nlohmann::json;    // ✅ 별칭 선언
+#include "SharedState.hpp"
 
 // formatTime 함수 정의
 std::string formatTime(sf::Time time) {
@@ -19,6 +22,8 @@ std::string formatTime(sf::Time time) {
 }
 
 // 게임 루프 함수 정의
+// 생략된 #include 및 using 구문은 유지
+
 void gameLoop(
     sf::RenderWindow& window,
     sf::Font& font,
@@ -43,9 +48,7 @@ void gameLoop(
     std::vector<sf::Vector2i>& possibleMoves,
     PieceColor& currentTurn,
     std::string& gameMessageStr,
-    std::map<std::string, sf::Texture>& textures, // place_piece 람다 때문에 main에서 textures를 캡처하고,
-                                                 // actualResetGame이 textures를 사용하므로 gameLoop에는 직접 필요 없을 수 있으나,
-                                                 // 혹시 모를 확장성을 위해 전달 (현재는 actualResetGame이 main의 textures를 캡처)
+    std::map<std::string, sf::Texture>& textures,
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::Time& whiteTimeLeft,
     sf::Time& blackTimeLeft,
@@ -55,25 +58,21 @@ void gameLoop(
     PieceColor myColor,
     float timerPadding
 ) {
-    // --- 메인 게임 루프 ---
     while (window.isOpen()) {
         bool kingIsCurrentlyChecked = false;
         sf::Vector2i checkedKingCurrentPos = {-1, -1};
 
-        // 게임 상태 업데이트 (시간, 체크/메이트, 메시지)
         updateTimersAndCheckState(currentGameState, currentTurn, whiteTimeLeft, blackTimeLeft, frameClock,
-                          gameMessageStr, board_state, kingIsCurrentlyChecked, checkedKingCurrentPos);
+                                  gameMessageStr, board_state, kingIsCurrentlyChecked, checkedKingCurrentPos);
 
-        // 타이머 텍스트 업데이트
         whiteTimerText.setString("White: " + formatTime(whiteTimeLeft));
         blackTimerText.setString("Black: " + formatTime(blackTimeLeft));
 
         sf::FloatRect wt_bounds_loop = whiteTimerText.getLocalBounds();
-        whiteTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - wt_bounds_loop.size.x) / 2.f - wt_bounds_loop.position.x, timerPadding - wt_bounds_loop.position.y});
+        whiteTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - wt_bounds_loop.size.x) / 2.f - wt_bounds_loop.position.x, timerPadding - wt_bounds_loop.position.y });
         sf::FloatRect bt_bounds_loop = blackTimerText.getLocalBounds();
         blackTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - bt_bounds_loop.size.x) / 2.f - bt_bounds_loop.position.x, whiteTimerText.getPosition().y + wt_bounds_loop.size.y + wt_bounds_loop.position.y + 5.f - bt_bounds_loop.position.y });
 
-        // 이벤트 처리
         while (const auto event_opt = window.pollEvent()) {
             const sf::Event& event = *event_opt;
             if (event.is<sf::Event::Closed>()) window.close();
@@ -88,11 +87,51 @@ void gameLoop(
             }
         }
 
+        // 🔁 메시지 처리 (상대방의 move 등)
+        {
+            std::lock_guard<std::mutex> lock(messageMutex);
+            while (!messageQueue.empty()) {
+                std::string msg = messageQueue.front();
+                messageQueue.pop();
+
+                try {
+                    json parsed = json::parse(msg);
+                    if (parsed["type"] == "move") {
+                        std::string from = parsed["from"];
+                        std::string to = parsed["to"];
+                        std::string piece = parsed["piece"];
+                        std::string color = parsed["color"];
+
+                        int fromRow = 8 - (from[1] - '0');
+                        int fromCol = from[0] - 'a';
+                        int toRow = 8 - (to[1] - '0');
+                        int toCol = to[0] - 'a';
+
+                        auto& movingPiece = board_state[fromRow][fromCol];
+                        if (movingPiece) {
+                            board_state[toRow][toCol] = movingPiece;
+                            board_state[fromRow][fromCol] = std::nullopt;
+                            auto& sprite = board_state[toRow][toCol]->sprite;
+                            sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+                            float x_offset = (static_cast<float>(TILE_SIZE) - spriteBounds.size.x) / 2.f;
+                            float y_offset = (static_cast<float>(TILE_SIZE) - spriteBounds.size.y) / 2.f;
+                            sprite.setPosition(sf::Vector2f(toCol * TILE_SIZE + x_offset, toRow * TILE_SIZE + y_offset));
+                        }
+                    } else if (parsed["type"] == "turn") {
+                        std::string turn = parsed["currentTurn"];
+                        currentTurn = (turn == "white") ? PieceColor::White : PieceColor::Black;
+                    }
+                } catch (...) {
+                    std::cerr << "[gameLoop] JSON 파싱 실패: " << msg << "\n";
+                }
+            }
+        }
+
         drawBoardAndUI(window, tile, lightColor, darkColor, checkedKingTileColor,
                        selectedPiecePos, possibleMoves,
                        whiteTimerText, blackTimerText, messageText, gameMessageStr,
                        popupMessageText, popupBackground, homeButtonShape, homeButtonText,
                        currentGameState, currentTurn, checkedKingCurrentPos, board_state,
-                       chooseSidePromptText,whiteStartButton,whiteStartText,blackStartButton,blackStartText);
+                       chooseSidePromptText, whiteStartButton, whiteStartText, blackStartButton, blackStartText);
     }
 }
