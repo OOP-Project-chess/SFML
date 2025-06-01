@@ -1,14 +1,14 @@
 #ifndef GAMELOOP_HPP
 #define GAMELOOP_HPP
 
-#include "GameData.hpp" // GameState, PieceColor, Piece 등 사용
+#include "GameData.hpp"
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
 #include <array>
 #include <optional>
 #include <map>
-#include <functional> // For std::function
+#include <functional>
 #include <boost/asio.hpp>
 
 // formatTime 함수 선언

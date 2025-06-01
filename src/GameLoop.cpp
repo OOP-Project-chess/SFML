@@ -21,9 +21,6 @@ std::string formatTime(sf::Time time) {
     return oss.str();
 }
 
-// 게임 루프 함수 정의
-// 생략된 #include 및 using 구문은 유지
-
 void gameLoop(
     sf::RenderWindow& window,
     sf::Font& font,
@@ -87,7 +84,6 @@ void gameLoop(
             }
         }
 
-        // 🔁 메시지 처리 (상대방의 move 등)
         {
             std::lock_guard<std::mutex> lock(messageMutex);
             while (!messageQueue.empty()) {

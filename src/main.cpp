@@ -1,13 +1,9 @@
-    #include "GameData.hpp"     // GameState, Piece, 상수 등 모든 정의 포함
-    #include "GameLogic.hpp"    // getPossibleMoves 등 게임 로직 함수
-    #include "GameLoop.hpp"     // gameLoop 함수 선언 포함
+    #include "GameData.hpp"
+    #include "GameLoop.hpp"
     #include "NetworkClient.hpp"
     #include <SFML/Graphics.hpp>
-    // Boost.Asio 관련 헤더는 네트워크 기능 추가 시 다시 포함
     #include <boost/asio.hpp>
-    #include <boost/asio/ip/address.hpp>
-
-    #include <iostream> // for std::cerr, std::cout
+    #include <iostream>
     #include <string>
     #include <vector>
     #include <array>
@@ -15,21 +11,15 @@
     #include <map>
     #include <queue>
     #include <mutex>
-    // #include <thread> // 네트워크 기능 추가 시 필요할 수 있음
-    // #include <chrono> // 네트워크 기능 추가 시 필요할 수 있음
-    #include <filesystem> // For paths
-    #include <iomanip>    // For std::setfill, std::setw (formatTime 함수가 GameLoop.cpp로 이동)
-    #include <sstream>    // For std::ostringstream (formatTime 함수가 GameLoop.cpp로 이동)
+    #include <filesystem>
     #include <nlohmann/json.hpp>
-    using json = nlohmann::json;
-    using boost::asio::ip::tcp;
-    using namespace std; // 사용자 코드 스타일 유지
     #include "SharedState.hpp"
 
+    using json = nlohmann::json;
+    using boost::asio::ip::tcp;
+    using namespace std;
     std::queue<std::string> messageQueue;
     std::mutex messageMutex;
-
-    // formatTime 함수는 GameLoop.cpp로 이동했습니다.
     PieceColor myColor = PieceColor::None;
 
     int main() {
@@ -47,20 +37,13 @@
                 } else if (parsed["type"] == "turn") {
                     std::string turn = parsed["currentTurn"];
                     std::cout << "Rotation: " << turn << '\n';
-
-                    // currentTurn은 gameLoop에 전달되므로 여기서는 messageQueue를 통해 전달만 함
                 }
             } catch (...) {
-                // 무시
+                cout << "Error parsing json: " << msg << '\n';
             }
         });
 
-
-        // 3. 소켓을 사용해 서버로 메시지 전송하고 싶다면:
         tcp::socket& socket = client.getSocket();
-        // 예: boost::asio::write(socket, boost::asio::buffer("hello"));
-
-
         sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Chess Game Prj (SFML 3.0.x)");
         window.setFramerateLimit(60);
 
@@ -83,7 +66,7 @@
         }
 
         sf::Text chooseSidePromptText(font);
-        chooseSidePromptText.setString("Choose your side to start");
+        chooseSidePromptText.setString("Click to start");
         chooseSidePromptText.setCharacterSize(30);
         chooseSidePromptText.setFillColor(sf::Color::Black);
         sf::FloatRect chooseSideBounds = chooseSidePromptText.getLocalBounds();
@@ -113,7 +96,7 @@
             chooseSidePromptText.getPosition().y + chooseSideBounds.size.y + chooseSideBounds.position.y + 30.f
         });
 
-        sf::Text whiteStartText(font, "Start as White", 24);
+        sf::Text whiteStartText(font, "START", 24);
         whiteStartText.setFillColor(sf::Color::Black);
         sf::FloatRect whiteTextBounds = whiteStartText.getLocalBounds();
         whiteStartText.setPosition({
@@ -127,9 +110,12 @@
             (WINDOW_WIDTH - buttonWidth) / 2.f,
             whiteStartButton.getPosition().y + whiteStartButton.getSize().y + 20.f
         });
+        blackStartButton.setFillColor(sf::Color::Transparent);
+        blackStartButton.setOutlineThickness(0);
+        blackStartButton.setSize({0.f, 0.f});
 
         sf::Text blackStartText(font, "Start as Black", 24);
-        blackStartText.setFillColor(sf::Color::White);
+        blackStartText.setFillColor(sf::Color::Transparent);
         sf::FloatRect blackTextBounds = blackStartText.getLocalBounds();
         blackStartText.setPosition({
             blackStartButton.getPosition().x + (blackStartButton.getSize().x - blackTextBounds.size.x) / 2.f - blackTextBounds.position.x,
@@ -159,24 +145,6 @@
 
         std::map<std::string, sf::Texture> textures;
         std::vector<std::string> names = { "king", "queen", "rook", "bishop", "knight", "pawn" };
-
-    //    client.startReceiving([&](const std::string& msg) {
-    //        std::lock_guard<std::mutex> lock(messageMutex);
-    //        messageQueue.push(msg);
-    //
-    //        try {
-    //            auto parsed = json::parse(msg);
-    //            if (parsed["type"] == "assignColor") {
-    //                std::string color = parsed["color"];
-    //                myColor = (color == "white") ? PieceColor::White : PieceColor::Black;
-    //            } else if (parsed["type"] == "turn") {
-    //                std::string turn = parsed["currentTurn"];
-    //                currentTurn = (turn == "white") ? PieceColor::White : PieceColor::Black;
-    //            }
-    //        } catch (...) {
-    //            // 무시
-    //        }
-    //    });
 
         for (const auto& color_str : { "w", "b" }) {
             for (const auto& name : names) {
@@ -233,7 +201,6 @@
         actualSetupBoard();
         frameClock.restart();
 
-        // 게임 루프 호출
         gameLoop(
             window, font, tile, lightColor, darkColor, checkedKingTileColor,
             chooseSidePromptText, messageText, whiteTimerText, blackTimerText,

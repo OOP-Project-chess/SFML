@@ -1,5 +1,4 @@
 #include "GameLogic.hpp"
-// 필요한 다른 표준 라이브러리가 있다면 여기에 include (예: <iostream> for debugging)
 
 std::vector<sf::Vector2i> getPossibleMoves(const std::array<std::array<std::optional<Piece>, 8>, 8>& board, int row, int col) {
     std::vector<sf::Vector2i> moves;

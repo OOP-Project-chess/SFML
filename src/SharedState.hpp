@@ -1,4 +1,3 @@
-// SharedState.hpp
 #pragma once
 #include <string>
 #include <queue>
