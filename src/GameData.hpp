@@ -15,7 +15,7 @@ const int BOARD_HEIGHT = 8 * TILE_SIZE;
 const int BUTTON_PANEL_WIDTH = 300;
 const int WINDOW_WIDTH = BOARD_WIDTH + BUTTON_PANEL_WIDTH;
 const int WINDOW_HEIGHT = BOARD_HEIGHT;
-const float INITIAL_TIME_SECONDS = 60.f;
+const float INITIAL_TIME_SECONDS = 600.f;
 // 서버 관련 상수는 네트워크 기능 추가 시 다시 포함 예정
 // const std::string SERVER_IP = "10.2.3.147";
 // const short SERVER_PORT = 1234;
