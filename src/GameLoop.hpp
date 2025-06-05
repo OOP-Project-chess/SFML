@@ -22,12 +22,11 @@ void gameLoop(
     sf::Color& lightColor,
     sf::Color& darkColor,
     sf::Color& checkedKingTileColor,
-    sf::Text& chooseSidePromptText,
+    // sf::Text& chooseSidePromptText, // <--- 이 줄을 삭제하거나 주석 처리하세요.
     sf::Text& messageText,
     sf::Text& whiteTimerText,
     sf::Text& blackTimerText,
-    sf::RectangleShape& whiteStartButton,
-    sf::Text& whiteStartText,
+    sf::Sprite& startButtonSprite,
     sf::RectangleShape& blackStartButton,
     sf::Text& blackStartText,
     sf::RectangleShape& popupBackground,
@@ -47,7 +46,10 @@ void gameLoop(
     std::function<void()> actualResetGame,
     boost::asio::ip::tcp::socket& socket,
     PieceColor myColor,
-    float timerPadding
+    float timerPadding,
+    sf::Sprite& backgroundSprite,
+    sf::Sprite& logoSprite,
+    sf::Sprite& uiPanelBgSprite
 );
 
 #endif // GAMELOOP_HPP

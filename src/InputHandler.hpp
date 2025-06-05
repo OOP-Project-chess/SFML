@@ -9,10 +9,11 @@
 void handleMouseClick(
     const sf::Vector2i& mousePos,
     GameState& currentGameState,
-    sf::RectangleShape& whiteStartButton,
-    sf::RectangleShape& blackStartButton,
-    sf::Text& whiteStartText,
-    sf::Text& blackStartText,
+    // sf::RectangleShape& whiteStartButton, // Removed
+    // sf::Text& whiteStartText,          // Removed
+    sf::Sprite& startButtonSprite,       // Added
+    sf::RectangleShape& blackStartButton, // Keep for now
+    sf::Text& blackStartText,          // Keep for now
     sf::Clock& frameClock,
     PieceColor& currentTurn,
     std::string& gameMessageStr,

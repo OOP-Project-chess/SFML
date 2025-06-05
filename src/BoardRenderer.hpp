@@ -19,13 +19,13 @@ void drawBoardAndUI(
     sf::RectangleShape& homeButtonShape,
     sf::Text& homeButtonText,
     GameState& currentGameState,
-    PieceColor& currentTurn,
+    PieceColor& currentTurn, // Pass currentTurn for renderer logic if needed
     sf::Vector2i checkedKingCurrentPos,
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
-    sf::Text& chooseSidePromptText,
-    sf::RectangleShape& whiteStartButton,
-   sf::Text& whiteStartText,
-   sf::RectangleShape& blackStartButton,
-   sf::Text& blackStartText
-
+    sf::Sprite& startButtonSprite,
+    sf::RectangleShape& blackStartButton,
+    sf::Text& blackStartText,
+    sf::Sprite& backgroundSprite, // 배경 스프라이트 추가
+    sf::Sprite& logoSprite,      // 로고 스프라이트 추가
+    sf::Sprite& uiPanelBgSprite
 );

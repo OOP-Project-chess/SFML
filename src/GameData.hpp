@@ -6,7 +6,7 @@
 
 // 전역 상수 정의
 const int TILE_SIZE = 100;
-const int BOARD_WIDTH = 8 * TILE_SIZE;
+const int BOARD_WIDTH = 8 * TILE_SIZE + 2;
 const int BOARD_HEIGHT = 8 * TILE_SIZE;
 const int BUTTON_PANEL_WIDTH = 300;
 const int WINDOW_WIDTH = BOARD_WIDTH + BUTTON_PANEL_WIDTH;
