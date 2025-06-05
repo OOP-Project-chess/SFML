@@ -32,6 +32,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/GameStateUpdater.cpp
         src/InputHandler.hpp
         src/InputHandler.cpp
+        src/ChessUtils.hpp
+        src/ChessUtils.cpp
 )
 
 
