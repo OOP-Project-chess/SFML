@@ -13,6 +13,7 @@
 #include <mutex>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <algorithm>
 #include "SharedState.hpp"
 
 using json = nlohmann::json;
@@ -23,12 +24,11 @@ std::mutex messageMutex;
 PieceColor myColor = PieceColor::None;
 
 int main() {
-    NetworkClient client("10.2.6.60", 1234);
+    NetworkClient client("10.2.19.156", 1234);
 
     client.startReceiving([&](const std::string& msg) {
         std::lock_guard<std::mutex> lock(messageMutex);
         messageQueue.push(msg);
-
         try {
             auto parsed = json::parse(msg);
             if (parsed["type"] == "assignColor") {
@@ -65,28 +65,16 @@ int main() {
         }
     }
 
-
     sf::Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("Textures/background.png")) {
         std::cerr << "Failed to load Textures/background.png" << std::endl;
         return -1;
     }
     sf::Sprite backgroundSprite(backgroundTexture);
-    // 배경 스프라이트의 크기를 창 크기에 맞게 조절 (선택 사항)
-    backgroundSprite.setScale({ // 중괄호로 sf::Vector2f 생성
+    backgroundSprite.setScale({
         static_cast<float>(WINDOW_WIDTH) / backgroundTexture.getSize().x,
         static_cast<float>(WINDOW_HEIGHT) / backgroundTexture.getSize().y
     });
-
-    /*sf::Text chooseSidePromptText(font);
-    chooseSidePromptText.setString("Click to start");
-    chooseSidePromptText.setCharacterSize(30);
-    chooseSidePromptText.setFillColor(sf::Color::Black);
-    sf::FloatRect chooseSideBounds = chooseSidePromptText.getLocalBounds();
-    chooseSidePromptText.setPosition({
-        (WINDOW_WIDTH - chooseSideBounds.size.x) / 2.f - chooseSideBounds.position.x, // Adjusted for width and left
-        WINDOW_HEIGHT / 2.f - 120.f - chooseSideBounds.position.y // Adjusted for top
-    });*/
 
     sf::Texture logoTexture;
     if (!logoTexture.loadFromFile("Textures/LOGO.png")) {
@@ -94,43 +82,23 @@ int main() {
         return -1;
     }
     sf::Sprite logoSprite(logoTexture);
-
     logoSprite.setScale({0.5f, 0.5f});
-
     sf::FloatRect logoBounds = logoSprite.getLocalBounds();
-    logoSprite.setOrigin({logoBounds.size.x / 2.f, logoBounds.size.y / 2.f}); // 중괄호로 sf::Vector2f 생성
-    logoSprite.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f - 170.f}); // 로고를 살짝 위로 이동 (선택 사항)
-
+    logoSprite.setOrigin({logoBounds.size.x / 2.f, logoBounds.size.y / 2.f});
+    logoSprite.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f - 170.f});
 
     sf::Text messageText(font);
     messageText.setCharacterSize(20);
     messageText.setFillColor(sf::Color::Black);
 
     sf::Text whiteTimerText(font, "00:00", 26);
-    sf::Color TimerFontColor(54, 26, 9); // 타이머 폰트 색 설정
+    sf::Color TimerFontColor(54, 26, 9);
     whiteTimerText.setFillColor(TimerFontColor);
     sf::Text blackTimerText(font, "00:00", 26);
     blackTimerText.setFillColor(TimerFontColor);
 
-    float timerPadding = 250.f; // 타이머 위치
-
-    // float buttonWidth = BUTTON_PANEL_WIDTH - 80; // No longer used for whiteStartButton
-    // float buttonHeight = 50.f; // No longer used for whiteStartButton
-
-    // sf::RectangleShape whiteStartButton({buttonWidth, buttonHeight}); // Replaced by sprite
-    // whiteStartButton.setFillColor(sf::Color(220, 220, 220));
-    // whiteStartButton.setPosition({ // Position logic moved to sprite
-    //     (WINDOW_WIDTH - buttonWidth) / 2.f,
-    //     chooseSidePromptText.getPosition().y + chooseSidePromptText.getGlobalBounds().size.y + 30.f // Adjusted based on chooseSidePromptText global bounds
-    // });
-
-    // sf::Text whiteStartText(font, "START", 24); // Replaced by sprite
-    // whiteStartText.setFillColor(sf::Color::Black);
-    // sf::FloatRect whiteTextBounds = whiteStartText.getLocalBounds();
-    // whiteStartText.setPosition({ // Position logic moved to sprite
-    //     whiteStartButton.getPosition().x + (whiteStartButton.getSize().x - whiteTextBounds.size.x) / 2.f - whiteTextBounds.position.x,
-    //     whiteStartButton.getPosition().y + (whiteStartButton.getSize().y - whiteTextBounds.size.y) / 2.f - whiteTextBounds.position.y
-    // });
+    float timerPadding = 250.f;
+    float interTimerSpacing = 20.f;
 
     sf::Texture startButtonTexture;
     if (!startButtonTexture.loadFromFile("Textures/START.png")) {
@@ -138,77 +106,90 @@ int main() {
         return -1;
     }
     sf::Sprite startButtonSprite(startButtonTexture);
-
     startButtonSprite.setScale({0.5f, 0.5f});
-
-    // Adjust scale if needed, e.g., startButtonSprite.setScale(0.5f, 0.5f);
     sf::FloatRect startSpriteBounds = startButtonSprite.getLocalBounds();
-    startButtonSprite.setOrigin({startSpriteBounds.size.x / 2.f, startSpriteBounds.size.y / 2.f
-}); // Set origin to center for easier positioning
+    startButtonSprite.setOrigin({startSpriteBounds.size.x / 2.f, startSpriteBounds.size.y / 2.f});
     startButtonSprite.setPosition({
         WINDOW_WIDTH / 2.f,
-        logoSprite.getPosition().y + logoSprite.getGlobalBounds().size.y / 2.f + startButtonSprite.getGlobalBounds().size.y / 2.f - 10.f // 로고 아래에 배치
+        logoSprite.getPosition().y + logoSprite.getGlobalBounds().size.y / 2.f + startButtonSprite.getGlobalBounds().size.y / 2.f - 10.f
     });
 
-
     sf::Texture uiPanelBgTexture;
-    // ▼▼▼ 파일 이름 수정 ▼▼▼
     if (!uiPanelBgTexture.loadFromFile("Textures/side.png")) {
         std::cerr << "Failed to load Textures/side.png" << std::endl;
-        // 파일 로드 실패 시 오류 처리 (예: 기본 색상으로 대체 또는 프로그램 종료)
     }
     sf::Sprite uiPanelBgSprite(uiPanelBgTexture);
-    uiPanelBgSprite.setPosition({static_cast<float>(BOARD_WIDTH), 0.f}); // UI 패널 위치 (보드 오른쪽)
-
-    // UI 패널 배경 이미지 크기를 패널 크기(BUTTON_PANEL_WIDTH x WINDOW_HEIGHT)에 맞게 조절
-    if (uiPanelBgTexture.getSize().x > 0 && uiPanelBgTexture.getSize().y > 0) { // 텍스처 로드 성공 여부 확인
+    uiPanelBgSprite.setPosition({static_cast<float>(BOARD_WIDTH), 0.f});
+    if (uiPanelBgTexture.getSize().x > 0 && uiPanelBgTexture.getSize().y > 0) {
         uiPanelBgSprite.setScale({
             static_cast<float>(BUTTON_PANEL_WIDTH) / uiPanelBgTexture.getSize().x,
             static_cast<float>(WINDOW_HEIGHT) / uiPanelBgTexture.getSize().y
         });
     }
 
+    sf::Texture player1Texture;
+    if (!player1Texture.loadFromFile("Textures/Player1.png")) {
+        std::cerr << "Failed to load Textures/Player1.png" << std::endl;
+    }
+    sf::Sprite player1Sprite(player1Texture);
+    player1Sprite.setScale({0.5f, 0.5f});
+    sf::FloatRect p1Bounds = player1Sprite.getLocalBounds();
+    player1Sprite.setOrigin({p1Bounds.size.x / 2.f, p1Bounds.size.y / 2.f - 195.f});
+    player1Sprite.setPosition({BOARD_WIDTH + BUTTON_PANEL_WIDTH / 2.f, WINDOW_HEIGHT * 2.f / 3.f });
+    sf::Texture player2Texture;
+    if (!player2Texture.loadFromFile("Textures/Player2.png")) {
+        std::cerr << "Failed to load Textures/Player2.png" << std::endl;
+    }
+    sf::Sprite player2Sprite(player2Texture);
+    player2Sprite.setScale({0.5f, 0.5f});
+    sf::FloatRect p2Bounds = player2Sprite.getLocalBounds();
+    player2Sprite.setOrigin({p2Bounds.size.x / 2.f, p2Bounds.size.y / 2.f + 270.f});
+    player2Sprite.setPosition({BOARD_WIDTH + BUTTON_PANEL_WIDTH / 2.f, WINDOW_HEIGHT / 3.f});
 
-    // Black start button remains for now, though its functionality might be reviewed
-    float blackButtonWidth = BUTTON_PANEL_WIDTH - 80;
-    float blackButtonHeight = 50.f;
-    sf::RectangleShape blackStartButton({blackButtonWidth, blackButtonHeight});
-    // blackStartButton.setFillColor(sf::Color(80, 80, 80)); // Original color
-    blackStartButton.setPosition({
-        (WINDOW_WIDTH - blackButtonWidth) / 2.f,
-        startButtonSprite.getPosition().y + startSpriteBounds.size.y / 2.f + 20.f + blackButtonHeight / 2.f // Position below new start sprite
-    });
-    // Making black button invisible as requested for the general START button
-    blackStartButton.setFillColor(sf::Color::Transparent);
-    blackStartButton.setOutlineThickness(0);
-    blackStartButton.setSize({0.f, 0.f});
+    sf::Texture waitingTexture;
+    if (!waitingTexture.loadFromFile("Textures/waiting.png")) {
+        std::cerr << "Failed to load Textures/waiting.png" << std::endl;
+    }
 
+    sf::Text player1NameText(font, "Player 1", 48);
+    player1NameText.setFillColor(sf::Color(85, 19, 0));
+    sf::FloatRect p1NameBounds = player1NameText.getLocalBounds();
+    player1NameText.setOrigin({p1NameBounds.position.x + p1NameBounds.size.x / 2.f, p1NameBounds.position.y + p1NameBounds.size.y / 2.f - 175.f});
+    player1NameText.setPosition({player1Sprite.getPosition().x, player1Sprite.getPosition().y + player1Sprite.getGlobalBounds().size.y / 2.f});
 
-    // sf::Text blackStartText(font, "Start as Black", 24); // Original text
-    sf::Text blackStartText(font, "", 24); // Keep text object but make it empty / transparent
-    // blackStartText.setFillColor(sf::Color::White); // Original color
-    sf::FloatRect blackTextBounds = blackStartText.getLocalBounds();
-    // blackStartText.setPosition({ // Original position logic
-    //     blackStartButton.getPosition().x + (blackStartButton.getSize().x - blackTextBounds.size.x) / 2.f - blackTextBounds.position.x,
-    //     blackStartButton.getPosition().y + (blackStartButton.getSize().y - blackTextBounds.size.y) / 2.f - blackTextBounds.position.y
-    // });
-    blackStartText.setFillColor(sf::Color::Transparent); // Make text transparent
+    sf::Text player2NameText(font, "Player 2", 48);
+    player2NameText.setFillColor(sf::Color(85, 19, 0));
+    sf::FloatRect p2NameBounds = player2NameText.getLocalBounds();
+    player2NameText.setOrigin({p2NameBounds.position.x + p2NameBounds.size.x / 2.f, p2NameBounds.position.y + p2NameBounds.size.y / 2.f + 55.f});
+    player2NameText.setPosition({player2Sprite.getPosition().x, player2Sprite.getPosition().y + player2Sprite.getGlobalBounds().size.y / 2.f});
 
+    sf::RectangleShape blackStartButton;
+    sf::Text blackStartText(font, "");
+    blackStartText.setFillColor(sf::Color::Transparent);
 
-    sf::RectangleShape popupBackground({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 3.f});
-    popupBackground.setFillColor(sf::Color(100, 100, 100, 220));
-    popupBackground.setOrigin({popupBackground.getSize().x / 2.f, popupBackground.getSize().y / 2.f});
-    popupBackground.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f});
+    sf::Texture popupTexture;
+    if (!popupTexture.loadFromFile("Textures/popup.png")) {
+        std::cerr << "Failed to load Textures/popup.png" << std::endl;
+        return -1;
+    }
+    sf::Sprite popupImageSprite(popupTexture);
+    popupImageSprite.setScale({0.6f, 0.6f});
+    sf::FloatRect popupImageBounds = popupImageSprite.getLocalBounds();
+    popupImageSprite.setOrigin({popupImageBounds.size.x / 2.f, popupImageBounds.size.y / 2.f});
+    popupImageSprite.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f});
 
     sf::Text popupMessageText(font, "", 28);
     popupMessageText.setFillColor(sf::Color::White);
 
-    sf::RectangleShape homeButtonShape({150.f, 50.f});
-    homeButtonShape.setFillColor(sf::Color(70, 130, 180));
-    homeButtonShape.setOrigin({homeButtonShape.getSize().x / 2.f, homeButtonShape.getSize().y / 2.f});
-
-    sf::Text homeButtonText(font, "HOME", 24);
-    homeButtonText.setFillColor(sf::Color::White);
+    sf::Texture homeButtonTexture;
+    if (!homeButtonTexture.loadFromFile("Textures/HOME.png")) {
+        std::cerr << "Failed to load Textures/HOME.png" << std::endl;
+        return -1;
+    }
+    sf::Sprite homeButtonSprite(homeButtonTexture);
+    homeButtonSprite.setScale({0.3f, 0.3f});
+    sf::FloatRect homeBounds = homeButtonSprite.getLocalBounds();
+    homeButtonSprite.setOrigin({homeBounds.size.x / 2.f, homeBounds.size.y / 2.f});
 
     GameState currentGameState = GameState::ChoosingPlayer;
     std::optional<sf::Vector2i> selectedPiecePos;
@@ -218,7 +199,6 @@ int main() {
 
     std::map<std::string, sf::Texture> textures;
     std::vector<std::string> names = { "king", "queen", "rook", "bishop", "knight", "pawn" };
-
     for (const auto& color_str : { "w", "b" }) {
         for (const auto& name : names) {
             std::string key = std::string(color_str) + "_" + name;
@@ -232,7 +212,6 @@ int main() {
     }
 
     std::array<std::array<std::optional<Piece>, 8>, 8> board_state;
-
     sf::Time whiteTimeLeft = sf::seconds(INITIAL_TIME_SECONDS);
     sf::Time blackTimeLeft = sf::seconds(INITIAL_TIME_SECONDS);
     sf::Clock frameClock;
@@ -243,8 +222,8 @@ int main() {
             std::cerr << "Texture for key '" << key << "' not found or invalid!" << std::endl; return;
         }
         sf::Sprite sprite(textures[key]);
-        sprite.setScale({0.15f, 0.15f}); // Ensure scale is appropriate
-        sf::FloatRect sprite_bounds = sprite.getGlobalBounds(); // Use getGlobalBounds after scaling
+        sprite.setScale({0.25f, 0.25f});
+        sf::FloatRect sprite_bounds = sprite.getGlobalBounds();
         float x_offset = (static_cast<float>(TILE_SIZE) - sprite_bounds.size.x) / 2.f;
         float y_offset = (static_cast<float>(TILE_SIZE) - sprite_bounds.size.y) / 2.f;
         sprite.setPosition({c * static_cast<float>(TILE_SIZE) + x_offset, r * static_cast<float>(TILE_SIZE) + y_offset});
@@ -261,11 +240,11 @@ int main() {
 
     auto actualResetGame_lambda = [&]() {
         actualSetupBoard();
-        currentGameState = GameState::ChoosingPlayer; // Reset to choosing player
+        currentGameState = GameState::ChoosingPlayer;
         currentTurn = PieceColor::None;
         selectedPiecePos.reset();
         possibleMoves.clear();
-        gameMessageStr = ""; // Clear message
+        gameMessageStr = "";
         whiteTimeLeft = sf::seconds(INITIAL_TIME_SECONDS);
         blackTimeLeft = sf::seconds(INITIAL_TIME_SECONDS);
         frameClock.restart();
@@ -279,15 +258,25 @@ int main() {
         messageText, whiteTimerText, blackTimerText,
         startButtonSprite,
         blackStartButton, blackStartText,
-        popupBackground, popupMessageText, homeButtonShape, homeButtonText,
+        popupImageSprite,
+        popupMessageText,
+        homeButtonSprite,
         currentGameState, selectedPiecePos, possibleMoves, currentTurn, gameMessageStr,
         textures, board_state, whiteTimeLeft, blackTimeLeft, frameClock,
         actualResetGame_lambda,
         socket, myColor,
         timerPadding,
-        backgroundSprite,      // 새로 추가된 배경 스프라이트 인자
-        logoSprite,             // 새로 추가된 로고 스프라이트 인자
-        uiPanelBgSprite // << UI 패널 배경 스프라이트 (side.png 로드됨)
+        interTimerSpacing,
+        backgroundSprite,
+        logoSprite,
+        uiPanelBgSprite,
+        player1Sprite,
+        player2Sprite,
+        player1NameText,
+        player2NameText,
+        player1Texture,
+        player2Texture,
+        waitingTexture
     );
 
     return 0;

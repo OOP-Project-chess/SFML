@@ -6,7 +6,7 @@
 #include "BoardRenderer.hpp"
 #include "GameStateUpdater.hpp"
 #include "InputHandler.hpp"
-#include "ChessUtils.hpp" // For toChessNotation, pieceTypeToString if needed elsewhere from here
+#include "ChessUtils.hpp"
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 #include "SharedState.hpp"
@@ -34,10 +34,9 @@ void gameLoop(
     sf::Sprite& startButtonSprite,
     sf::RectangleShape& blackStartButton,
     sf::Text& blackStartText,
-    sf::RectangleShape& popupBackground,
+    sf::Sprite& popupImageSprite,
     sf::Text& popupMessageText,
-    sf::RectangleShape& homeButtonShape,
-    sf::Text& homeButtonText,
+    sf::Sprite& homeButtonSprite,
     GameState& currentGameState,
     std::optional<sf::Vector2i>& selectedPiecePos,
     std::vector<sf::Vector2i>& possibleMoves,
@@ -52,9 +51,17 @@ void gameLoop(
     boost::asio::ip::tcp::socket& socket,
     PieceColor myColor,
     float timerPadding,
+    float interTimerSpacing,
     sf::Sprite& backgroundSprite,
     sf::Sprite& logoSprite,
-    sf::Sprite& uiPanelBgSprite
+    sf::Sprite& uiPanelBgSprite,
+    sf::Sprite& player1Sprite,
+    sf::Sprite& player2Sprite,
+    sf::Text& player1NameText,
+    sf::Text& player2NameText,
+    sf::Texture& player1Texture,
+    sf::Texture& player2Texture,
+    sf::Texture& waitingTexture
 ) {
     while (window.isOpen()) {
         bool kingIsCurrentlyChecked = false;
@@ -66,12 +73,6 @@ void gameLoop(
         whiteTimerText.setString("White: " + formatTime(whiteTimeLeft));
         blackTimerText.setString("Black: " + formatTime(blackTimeLeft));
 
-        sf::FloatRect wt_bounds_loop = whiteTimerText.getLocalBounds();
-        whiteTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - wt_bounds_loop.size.x) / 2.f - wt_bounds_loop.position.x, timerPadding - wt_bounds_loop.position.y });
-        sf::FloatRect bt_bounds_loop = blackTimerText.getLocalBounds();
-        blackTimerText.setPosition({ BOARD_WIDTH + (BUTTON_PANEL_WIDTH - bt_bounds_loop.size.x) / 2.f - bt_bounds_loop.position.x, whiteTimerText.getPosition().y + whiteTimerText.getGlobalBounds().size.y + 5.f - bt_bounds_loop.position.y });
-
-
         while (const auto event_opt = window.pollEvent()) {
             const sf::Event& event = *event_opt;
             if (event.is<sf::Event::Closed>()) window.close();
@@ -80,11 +81,12 @@ void gameLoop(
             } else if (const auto* mouseButtonPressed = event.getIf<sf::Event::MouseButtonPressed>()) {
                 if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
                     handleMouseClick(mouseButtonPressed->position, currentGameState,
-                                     // whiteStartButton, whiteStartText, // Removed
-                                     startButtonSprite, // Added
-                                     blackStartButton, blackStartText, // Pass black button
+                                     startButtonSprite,
+                                     blackStartButton, blackStartText,
                                      frameClock, currentTurn, gameMessageStr,
-                                     selectedPiecePos, possibleMoves, board_state, homeButtonShape, actualResetGame, socket, myColor);
+                                     selectedPiecePos, possibleMoves, board_state,
+                                     homeButtonSprite,
+                                     actualResetGame, socket, myColor);
                 }
             }
         }
@@ -94,8 +96,6 @@ void gameLoop(
             while (!messageQueue.empty()) {
                 std::string msg = messageQueue.front();
                 messageQueue.pop();
-                // std::cout << "Processing from queue: " << msg << std::endl; // Debug log
-
                 try {
                     json parsed = json::parse(msg);
                     if (parsed.contains("type")) {
@@ -171,14 +171,22 @@ void gameLoop(
         drawBoardAndUI(window, tile, lightColor, darkColor, checkedKingTileColor,
                        selectedPiecePos, possibleMoves,
                        whiteTimerText, blackTimerText, messageText, gameMessageStr,
-                       popupMessageText, popupBackground, homeButtonShape, homeButtonText,
+                       popupMessageText,
+                       popupImageSprite,
+                       homeButtonSprite,
                        currentGameState, currentTurn, checkedKingCurrentPos, board_state,
-                       // chooseSidePromptText, // 제거
                        startButtonSprite,
                        blackStartButton, blackStartText,
-                       backgroundSprite, // 배경 스프라이트 전달
-                       logoSprite,      // 로고 스프라이트 전달
-                       uiPanelBgSprite
+                       backgroundSprite,
+                       logoSprite,
+                       uiPanelBgSprite,
+                       player1Sprite,
+                       player2Sprite,
+                       player1NameText,
+                       player2NameText,
+                       player1Texture,
+                       player2Texture,
+                       waitingTexture
                        );
     }
 }

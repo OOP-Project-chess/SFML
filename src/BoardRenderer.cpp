@@ -1,6 +1,6 @@
 #include "BoardRenderer.hpp"
-#include "GameData.hpp" // TILE_SIZE, BOARD_WIDTH, BUTTON_PANEL_WIDTH, WINDOW_HEIGHT 등 사용
-#include <SFML/Graphics.hpp> // 여기서도 SFML 타입들을 사용하므로 필요
+#include "GameData.hpp"
+#include <SFML/Graphics.hpp>
 
 void drawBoardAndUI(
     sf::RenderWindow& window,
@@ -15,138 +15,180 @@ void drawBoardAndUI(
     sf::Text& messageText,
     std::string& gameMessageStr,
     sf::Text& popupMessageText,
-    sf::RectangleShape& popupBackground,
-    sf::RectangleShape& homeButtonShape,
-    sf::Text& homeButtonText,
+    sf::Sprite& popupImageSprite,
+    sf::Sprite& homeButtonSprite,
     GameState& currentGameState,
     PieceColor& currentTurn,
     sf::Vector2i checkedKingCurrentPos,
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::Sprite& startButtonSprite,
-    [[maybe_unused]] sf::RectangleShape& blackStartButton, // 명시적으로 사용 안 함을 표시 (주석 처리된 부분)
-    [[maybe_unused]] sf::Text& blackStartText,          // 명시적으로 사용 안 함을 표시 (주석 처리된 부분)
+    [[maybe_unused]] sf::RectangleShape& blackStartButton,
+    [[maybe_unused]] sf::Text& blackStartText,
     sf::Sprite& backgroundSprite,
     sf::Sprite& logoSprite,
-    sf::Sprite& uiPanelBgSprite
+    sf::Sprite& uiPanelBgSprite,
+    sf::Sprite& player1Sprite,
+    sf::Sprite& player2Sprite,
+    sf::Text& player1NameText,
+    sf::Text& player2NameText,
+    sf::Texture& player1Texture,
+    sf::Texture& player2Texture,
+    sf::Texture& waitingTexture
 ) {
-    window.clear(sf::Color::Black); // 매 프레임 시작 시 화면을 특정 색으로 지웁니다 (예: 검은색)
+    window.clear(sf::Color::Black);
 
     if (currentGameState == GameState::ChoosingPlayer) {
-        window.draw(backgroundSprite); // 홈 화면 배경 이미지 그리기
-        window.draw(logoSprite);       // 로고 이미지 그리기
-        window.draw(startButtonSprite);// 시작 버튼 이미지 그리기
-        // blackStartButton 과 blackStartText 는 main.cpp 에서 투명하게 설정했으므로 여기서는 그리지 않아도 됩니다.
+        window.draw(backgroundSprite);
+        window.draw(logoSprite);
+        window.draw(startButtonSprite);
     }
-    else { // GameState::Playing or GameState::GameOver
-        // 1. 체스 보드 타일 그리기
+    else {
         for (int r = 0; r < 8; ++r) {
             for (int c = 0; c < 8; ++c) {
                 bool isLight = (r + c) % 2 == 0;
-                tile.setFillColor(isLight ? lightColor : darkColor); // 기본 타일 색상
-
+                tile.setFillColor(isLight ? lightColor : darkColor);
                 if (checkedKingCurrentPos.x == c && checkedKingCurrentPos.y == r) {
                     tile.setFillColor(checkedKingTileColor);
                 } else if (selectedPiecePos && selectedPiecePos->x == c && selectedPiecePos->y == r) {
-                    tile.setFillColor(sf::Color(255, 255, 0, 150)); // 선택된 말 노란색
+                    tile.setFillColor(sf::Color(215, 244, 178));
                 } else {
                     for (const auto& move : possibleMoves) {
                         if (move.x == c && move.y == r) {
-                            if (board_state[r][c] && board_state[r][c]->color != currentTurn) { // 공격
-                                tile.setFillColor(sf::Color(250, 50, 50, 150)); // 공격 가능 경로
-                            } else { // 빈 곳으로 이동
-                                tile.setFillColor(sf::Color(100, 200, 50, 150)); // 이동 가능 경로
+                            if (board_state[r][c] && board_state[r][c]->color != currentTurn) {
+                                tile.setFillColor(sf::Color(250, 101, 67));
+                            } else {
+                                tile.setFillColor(sf::Color(172, 224, 240));
                             }
                             break;
                         }
                     }
                 }
-
-                // 타일 외곽선 추가
                 float lineThickness = 2.5f;
                 tile.setOutlineThickness(-lineThickness);
-                tile.setOutlineColor(sf::Color(30, 30, 30, 200)); // 선 색상 (어두운 회색 계열)
-
+                tile.setOutlineColor(sf::Color(30, 30, 30, 200));
                 tile.setPosition({static_cast<float>(c * TILE_SIZE), static_cast<float>(r * TILE_SIZE)});
                 window.draw(tile);
             }
         }
 
-        // 2. UI 패널 배경 그리기 (보드 오른쪽)
         window.draw(uiPanelBgSprite);
 
-        // 3. 체스 말 그리기
         for (int r = 0; r < 8; ++r) {
             for (int c = 0; c < 8; ++c) {
                 if (board_state[r][c].has_value()) {
-                    Piece pieceToDraw = board_state[r][c].value(); // 값 복사로 안전하게 색상 변경
-
+                    Piece pieceToDraw = board_state[r][c].value();
                     bool isLosingKing = (currentGameState == GameState::GameOver &&
                                          pieceToDraw.type == PieceType::King &&
-                                         pieceToDraw.color == currentTurn); // currentTurn이 패배한 플레이어
-
-                    pieceToDraw.sprite.setColor(isLosingKing ? sf::Color(255, 0, 0, 200) : sf::Color::White); // 패배한 킹은 빨갛게
+                                         pieceToDraw.color == currentTurn);
+                    pieceToDraw.sprite.setColor(isLosingKing ? sf::Color(255, 0, 0, 200) : sf::Color::White);
                     window.draw(pieceToDraw.sprite);
                 }
             }
         }
 
-        // 4. UI 패널 위의 요소들(타이머, 메시지 등) 그리기
+        // --- 턴에 따라 플레이어 이미지 텍스처 변경 ---
+        if (currentTurn == PieceColor::White) {
+            player1Sprite.setTexture(player1Texture, true);
+            player2Sprite.setTexture(waitingTexture, true);
+        } else if (currentTurn == PieceColor::Black) {
+            player1Sprite.setTexture(waitingTexture, true);
+            player2Sprite.setTexture(player2Texture, true);
+        } else { // 게임 오버 등 다른 상태일 경우
+            player1Sprite.setTexture(player1Texture, true);
+            player2Sprite.setTexture(player2Texture, true);
+        }
+
+        float panelCenterX = BOARD_WIDTH + BUTTON_PANEL_WIDTH / 2.f;
+
+        // Player 2 이미지 및 텍스트 위치 설정
+        player2Sprite.setPosition({panelCenterX, WINDOW_HEIGHT / 3.f});
+        window.draw(player2Sprite);
+        player2NameText.setPosition({player2Sprite.getPosition().x, player2Sprite.getPosition().y + 30.f});
+        window.draw(player2NameText);
+
+        // Player 1 이미지 및 텍스트 위치 설정
+        player1Sprite.setPosition({panelCenterX, WINDOW_HEIGHT * 2.f / 3.f});
+        window.draw(player1Sprite);
+        player1NameText.setPosition({player1Sprite.getPosition().x, player1Sprite.getPosition().y + 30.f});
+        window.draw(player1NameText);
+
+        // 타이머 위치 설정
+        float verticalCenter = WINDOW_HEIGHT / 2.f;
+        float timerSpacing = 15.f;
+        sf::FloatRect whiteTimerBounds = whiteTimerText.getLocalBounds();
+        // White Timer 위치를 아래로 변경
+        whiteTimerText.setPosition({
+            BOARD_WIDTH + (BUTTON_PANEL_WIDTH - whiteTimerBounds.size.x) / 2.f - whiteTimerBounds.position.x,
+            verticalCenter + timerSpacing
+        });
+
+        sf::FloatRect blackTimerBounds = blackTimerText.getLocalBounds();
+        // Black Timer 위치를 위로 변경
+        blackTimerText.setPosition({
+            BOARD_WIDTH + (BUTTON_PANEL_WIDTH - blackTimerBounds.size.x) / 2.f - blackTimerBounds.position.x,
+            verticalCenter - blackTimerText.getGlobalBounds().size.y - timerSpacing
+        });
+
         window.draw(whiteTimerText);
         window.draw(blackTimerText);
 
+        // 중요 메시지 (Check!) 표시
         if (!gameMessageStr.empty()) {
-            messageText.setString(gameMessageStr);
-            sf::FloatRect msgBounds = messageText.getLocalBounds();
-            messageText.setPosition({
-                BOARD_WIDTH + (BUTTON_PANEL_WIDTH - msgBounds.size.x) / 2.f - msgBounds.position.x,
-                (WINDOW_HEIGHT - msgBounds.size.y) / 2.f - msgBounds.position.y // UI 패널 중앙에 메시지
-            });
+            bool isTurnMessage = (gameMessageStr.find("to move") != std::string::npos);
+            bool isGameOverMessage = (currentGameState == GameState::GameOver);
 
-            // 메시지 종류에 따른 스타일링
-            messageText.setFillColor(sf::Color::Black); // 기본값
-            messageText.setStyle(sf::Text::Regular);   // 기본값
+            if (!isTurnMessage && !isGameOverMessage) {
+                messageText.setString(gameMessageStr);
+                sf::FloatRect msgBounds = messageText.getLocalBounds();
 
-            if (currentGameState == GameState::GameOver || gameMessageStr.find("wins by") != std::string::npos || gameMessageStr.find("wins on time") != std::string::npos) {
-                messageText.setFillColor(sf::Color(180, 0, 0)); // 어두운 빨강
-                messageText.setStyle(sf::Text::Bold);
-            } else if (gameMessageStr.find("Check!") != std::string::npos) {
-                messageText.setFillColor(sf::Color(200, 0, 0)); // 밝은 빨강
-                messageText.setStyle(sf::Text::Bold);
+                // ▼▼▼ "Check!" 메시지 위치 조건부 설정 ▼▼▼
+                float messageY;
+                float originalY = (WINDOW_HEIGHT / 2.f) - 100.f - (msgBounds.size.y / 2.f) - msgBounds.position.y;
+
+                // 현재 턴이 White일 때 (즉, White King이 체크일 때) Y좌표를 300px 내립니다.
+                if (currentTurn == PieceColor::White && gameMessageStr.find("Check!") != std::string::npos) {
+                    messageY = originalY + 210.f;
+                } else { // Black King이 체크이거나 다른 메시지일 때는 원래 위치
+                    messageY = originalY;
+                }
+
+                messageText.setPosition({
+                    BOARD_WIDTH + (BUTTON_PANEL_WIDTH - msgBounds.size.x) / 2.f - msgBounds.position.x,
+                    messageY
+                });
+                // ▲▲▲ "Check!" 메시지 위치 조건부 설정 ▲▲▲
+
+                if (gameMessageStr.find("Check!") != std::string::npos) {
+                    messageText.setFillColor(sf::Color(200, 0, 0));
+                    messageText.setStyle(sf::Text::Bold);
+                }
+
+                window.draw(messageText);
             }
-             else if (gameMessageStr.find("Your turn") != std::string::npos) {
-                messageText.setFillColor(sf::Color(0, 100, 0)); // 어두운 초록
-                messageText.setStyle(sf::Text::Bold);
-            } else if (gameMessageStr.find("to move") != std::string::npos) {
-                 messageText.setFillColor(sf::Color::Black);
-            }
-
-
-            window.draw(messageText);
         }
 
-        // 5. 게임 오버 팝업 그리기 (필요시)
+        // 게임 오버 팝업 표시
         if (currentGameState == GameState::GameOver) {
-            window.draw(popupBackground);
+            window.draw(popupImageSprite);
 
-            popupMessageText.setString(gameMessageStr); // 게임 오버 메시지는 gameMessageStr 사용
+            popupMessageText.setString(gameMessageStr);
+            popupMessageText.setCharacterSize(41);
+            popupMessageText.setFillColor(sf::Color(255, 245, 207));
+            popupMessageText.setOutlineColor(sf::Color(88, 43, 10));
+            popupMessageText.setOutlineThickness(6.f);
+            popupMessageText.setStyle(sf::Text::Bold);
             sf::FloatRect popupMsgBounds = popupMessageText.getLocalBounds();
             popupMessageText.setPosition({
-                popupBackground.getPosition().x - popupMsgBounds.size.x / 2.f - popupMsgBounds.position.x,
-                popupBackground.getPosition().y - popupBackground.getSize().y / 2.f + 40.f - popupMsgBounds.position.y // 팝업 상단 근처
+                popupImageSprite.getPosition().x - popupMsgBounds.size.x / 2.f - popupMsgBounds.position.x,
+                popupImageSprite.getPosition().y - 50.f
             });
             window.draw(popupMessageText);
 
-            homeButtonShape.setPosition({
-                popupBackground.getPosition().x,
-                popupBackground.getPosition().y + popupBackground.getSize().y / 2.f - homeButtonShape.getSize().y / 2.f - 30.f // 팝업 하단 근처
+            homeButtonSprite.setPosition({
+                popupImageSprite.getPosition().x,
+                popupImageSprite.getPosition().y + 80.f
             });
-            window.draw(homeButtonShape);
-
-            // homeButtonText의 원점과 위치를 homeButtonShape 기준으로 다시 계산
-            sf::FloatRect homeTextBounds = homeButtonText.getLocalBounds();
-            homeButtonText.setOrigin({homeTextBounds.position.x + homeTextBounds.size.x / 2.f, homeTextBounds.position.y + homeTextBounds.size.y / 2.f});
-            homeButtonText.setPosition({homeButtonShape.getPosition().x, homeButtonShape.getPosition().y});
-            window.draw(homeButtonText);
+            window.draw(homeButtonSprite);
         }
     }
 

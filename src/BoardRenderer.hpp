@@ -1,6 +1,10 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "GameData.hpp"
+#include <string>
+#include <vector>
+#include <array>
+#include <optional>
 
 void drawBoardAndUI(
     sf::RenderWindow& window,
@@ -15,17 +19,23 @@ void drawBoardAndUI(
     sf::Text& messageText,
     std::string& gameMessageStr,
     sf::Text& popupMessageText,
-    sf::RectangleShape& popupBackground,
-    sf::RectangleShape& homeButtonShape,
-    sf::Text& homeButtonText,
+    sf::Sprite& popupImageSprite,
+    sf::Sprite& homeButtonSprite,
     GameState& currentGameState,
-    PieceColor& currentTurn, // Pass currentTurn for renderer logic if needed
+    PieceColor& currentTurn,
     sf::Vector2i checkedKingCurrentPos,
     std::array<std::array<std::optional<Piece>, 8>, 8>& board_state,
     sf::Sprite& startButtonSprite,
     sf::RectangleShape& blackStartButton,
     sf::Text& blackStartText,
-    sf::Sprite& backgroundSprite, // 배경 스프라이트 추가
-    sf::Sprite& logoSprite,      // 로고 스프라이트 추가
-    sf::Sprite& uiPanelBgSprite
+    sf::Sprite& backgroundSprite,
+    sf::Sprite& logoSprite,
+    sf::Sprite& uiPanelBgSprite,
+    sf::Sprite& player1Sprite,
+    sf::Sprite& player2Sprite,
+    sf::Text& player1NameText,
+    sf::Text& player2NameText,
+    sf::Texture& player1Texture,
+    sf::Texture& player2Texture,
+    sf::Texture& waitingTexture
 );

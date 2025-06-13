@@ -11,10 +11,8 @@
 #include <functional>
 #include <boost/asio.hpp>
 
-// formatTime 함수 선언
 std::string formatTime(sf::Time time);
 
-// 게임 루프 함수 선언
 void gameLoop(
     sf::RenderWindow& window,
     sf::Font& font,
@@ -22,17 +20,15 @@ void gameLoop(
     sf::Color& lightColor,
     sf::Color& darkColor,
     sf::Color& checkedKingTileColor,
-    // sf::Text& chooseSidePromptText, // <--- 이 줄을 삭제하거나 주석 처리하세요.
     sf::Text& messageText,
     sf::Text& whiteTimerText,
     sf::Text& blackTimerText,
     sf::Sprite& startButtonSprite,
     sf::RectangleShape& blackStartButton,
     sf::Text& blackStartText,
-    sf::RectangleShape& popupBackground,
+    sf::Sprite& popupImageSprite,
     sf::Text& popupMessageText,
-    sf::RectangleShape& homeButtonShape,
-    sf::Text& homeButtonText,
+    sf::Sprite& homeButtonSprite,
     GameState& currentGameState,
     std::optional<sf::Vector2i>& selectedPiecePos,
     std::vector<sf::Vector2i>& possibleMoves,
@@ -47,9 +43,17 @@ void gameLoop(
     boost::asio::ip::tcp::socket& socket,
     PieceColor myColor,
     float timerPadding,
+    float interTimerSpacing,
     sf::Sprite& backgroundSprite,
     sf::Sprite& logoSprite,
-    sf::Sprite& uiPanelBgSprite
+    sf::Sprite& uiPanelBgSprite,
+    sf::Sprite& player1Sprite,
+    sf::Sprite& player2Sprite,
+    sf::Text& player1NameText,
+    sf::Text& player2NameText,
+    sf::Texture& player1Texture,
+    sf::Texture& player2Texture,
+    sf::Texture& waitingTexture
 );
 
 #endif // GAMELOOP_HPP
